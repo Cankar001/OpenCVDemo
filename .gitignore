@@ -1,0 +1,21 @@
+# IDE setup files
+.vs/
+.vscode/
+
+# Build directories
+bin/
+bin-int/
+bin-obj/
+build/
+builds/
+!vendor/bin/
+
+# Visual Studio files
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user
+
+# Others
+*.log
+Makefile
