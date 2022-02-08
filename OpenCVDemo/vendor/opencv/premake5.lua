@@ -2,10 +2,10 @@ project "OpenCV"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "on"
+	staticruntime "off"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
+	targetdir ("bin/" .. outputdir)
+	objdir ("bin-obj/" .. outputdir)
 	
 	files
 	{
@@ -20,11 +20,9 @@ project "OpenCV"
 	
 	filter "system:linux"
 		systemversion "latest"
-		staticruntime "On"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
 		
 	filter "configurations:Debug"
 		runtime "Debug"

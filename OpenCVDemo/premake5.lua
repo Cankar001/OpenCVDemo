@@ -21,11 +21,6 @@ project "OpenCVDemo"
 		"%{IncludeDir.opencv}"
 	}
 	
-	libdirs
-	{
-		"%{LibDir.opencv_lib_path}"
-	}
-	
 	postbuildcommands
 	{
 		("{COPY} %{wks.location}OpenCVDemo/vendor/opencv/lib/opencv_world455d.dll %{cfg.targetdir}"),
@@ -63,7 +58,8 @@ project "OpenCVDemo"
 		("{COPY} %{wks.location}OpenCVDemo/vendor/opencv/lib/opencv_videoio_ffmpeg455_64.dll %{cfg.targetdir}"),
 	}
 	
-	filter "configurations:Debug"
+	filter { "system:windows", "configurations:Debug" }
+		systemversion "latest"
 		symbols "On"
 		defines "OPENCVDEMO_DEBUG"
 	
@@ -79,7 +75,8 @@ project "OpenCVDemo"
 			"%{LibDir.opencv_highgui_debug}",
 		}
 	
-	filter "configurations:Release"
+	filter { "system:windows", "configurations:Release" }
+		systemversion "latest"
 		optimize "On"
 		defines "OPENCVDEMO_RELEASE"
 	
@@ -95,17 +92,54 @@ project "OpenCVDemo"
 			"%{LibDir.opencv_highgui}",
 		}
 	
-	filter "system:windows"
+	filter { "system:linux", "configurations:Debug" }
 		systemversion "latest"
+		linkgroups "On"
+	
+		libdirs
+		{
+			"./vendor/opencv/lib/Debug/",
+		}
+		
+		
+		linkoptions
+		{
+			"-lvendor/opencv/lib-linux/Debug/libopencv_world.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_text.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_tracking.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_video.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_videoio.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_face.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_stitching.so",
+			"-lvendor/opencv/lib-linux/Debug/libopencv_highgui.so",
+		}
+		
+		
+		--[[
+		links
+		{
+			"OpenCV"
+		}
+		]]--
+	
+	filter { "system:linux", "configurations:Release" }
+		systemversion "latest"
+		linkgroups "On"
 
-	filter "system:linux"
-		systemversion "latest"
+		libdirs
+		{
+			"./vendor/opencv/lib/Release/",
+			"./vendor/opencv/lib-linux/Release/"
+		}
 	
 		links
 		{
 			"OpenCV"
 		}
 	
-	filter "system:macos"
+	filter { "system:macos", "configurations:Debug" }
+		systemversion "latest"
+	
+	filter { "system:macos", "configurations:Release" }
 		systemversion "latest"
 		
