@@ -32,7 +32,7 @@ tracking, learning and detection.
 
 You also can build the solution inside visual studio but execute the program directly outside of visual studio.
 
-To do that, you need to first switch into the build directoy like this: (assuming you are in the root directory of the github repo):
+To do that, you need to first switch into the build directoy like this (assuming you are in the root directory of the github repo):
 ```sh
 cd OpenCVDemo/bin/Release-windows-x86_64/OpenCVDemo/
 ```
