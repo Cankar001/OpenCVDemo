@@ -28,3 +28,19 @@ tracking, learning and detection.
 
 **Note: (The descriptions are taken from the brief descriptions of the respective classes.)**
 
+# Example of usage
+
+You also can build the solution inside visual studio but execute the program directly outside of visual studio.
+
+To do that, you need to first switch into the build directoy like this: (assuming you are in the root directory of the github repo):
+```sh
+cd OpenCVDemo/bin/Release-windows-x86_64/OpenCVDemo/
+```
+
+After that you should be able to execute the program like this:
+```sh
+./OpenCVDemo.exe test.mov KCF
+```
+
+This command would execute the program with the video file "test.mov" and the tracking type "KCF". You can adjust this command to your needs, based on the commandline explanations above.
+
