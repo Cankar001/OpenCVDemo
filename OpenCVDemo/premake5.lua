@@ -5,9 +5,9 @@ project "OpenCVDemo"
 	staticruntime "off"
 	entrypoint "mainCRTStartup"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
+	targetdir ("bin/" .. outputdir)
+	debugdir ("bin/" .. outputdir)
+	objdir ("bin-obj/" .. outputdir)
 	
 	files
 	{ 

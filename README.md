@@ -34,7 +34,7 @@ You also can build the solution inside visual studio but execute the program dir
 
 To do that, you need to first switch into the build directoy like this (assuming you are in the root directory of the github repo):
 ```sh
-cd OpenCVDemo/bin/Release-windows-x86_64/OpenCVDemo/
+cd OpenCVDemo/bin/Release-windows-x86_64/
 ```
 
 After that you should be able to execute the program like this:
