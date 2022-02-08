@@ -3,91 +3,130 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/tracking.hpp>
+#include <opencv2/core/utils/logger.hpp>
 #include <opencv2/tracking/tracking_legacy.hpp>
 
-void ResizeBoxes(cv::Rect &box)
+namespace utils
 {
-	box.x += cvRound(box.width * 0.1);
-	box.width = cvRound(box.width * 0.8);
-	box.y += cvRound(box.height * 0.06);
-	box.height = cvRound(box.height * 0.8);
+	static cv::Ptr<cv::legacy::tracking::Tracker> CreateTrackerByName(const std::string &name)
+	{
+		if (name == "KCF")
+			return cv::legacy::tracking::TrackerKCF::create();
+		else if (name == "MIL")
+			return cv::legacy::tracking::TrackerMIL::create();
+		else if (name == "TLD")
+			return cv::legacy::tracking::TrackerTLD::create();
+		else if (name == "CSRT")
+			return cv::legacy::tracking::TrackerCSRT::create();
+		else if (name == "MOSSE")
+			return cv::legacy::tracking::TrackerMOSSE::create();
+
+		// default tracker
+		return cv::legacy::tracking::TrackerKCF::create();
+	}
 }
 
 int main(int argc, char *argv[])
 {
-	cv::VideoCapture video("test.mp4");
-	if (!video.isOpened())
-		return -1;
-
-	cv::Mat frame;
-	int32_t frameWidth = (int32_t)video.get(cv::CAP_PROP_FRAME_WIDTH);
-	int32_t frameHeigth = (int32_t)video.get(cv::CAP_PROP_FRAME_HEIGHT);
-	cv::VideoWriter output("output.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(frameWidth, frameHeigth));
-	cv::Ptr<cv::legacy::MultiTracker> multiTracker = cv::legacy::MultiTracker::create();
-	cv::HOGDescriptor hog;
-	std::vector<cv::Rect> detections;
-	int32_t frameNumber = 1;
-	
-	video.read(frame);
-
-	// Initialize HOG descriptor and use human detection classifier coefficients
-	hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-
-	// Detect people and save them to detections and initialize multi tracker based on these
-	hog.detectMultiScale(frame, detections, 0, cv::Size(8, 8), cv::Size(32, 32), 1.2, 2);
-
-	for (auto &detection : detections)
+	if (argc < 2)
 	{
-		ResizeBoxes(detection);
-		cv::Ptr<cv::legacy::TrackerKCF> tracker = cv::legacy::TrackerKCF::create();
-		tracker->init(frame, detection);
-		multiTracker->add(tracker, frame, detection);
+		std::cout << "Error: Please provide the path to a test video file as the first command line argument!" << std::endl;
+		return -1;
 	}
 
-	while (video.read(frame))
+	std::string trackerName = "KCF";
+	if (argc >= 3)
 	{
-		frameNumber++;
+		std::cout << "Selected custom tracker: " << argv[2] << std::endl;
+		trackerName = argv[2];
+	}
 
-		// Every 15 frames add new set of detections and clear old ones
-		if (frameNumber % 15 == 0)
+	char *videoPath = argv[1];
+	cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT); // Disable log output, otherwise the erros are really bad to read
+	cv::VideoCapture video(videoPath);
+
+	if (!video.isOpened())
+	{
+		std::cout << "Error: Video file could not be opened!" << std::endl;
+		return -1;
+	}
+
+	cv::Mat frame;
+	cv::Ptr<cv::legacy::MultiTracker> multiTracker = cv::legacy::MultiTracker::create();
+	std::vector<cv::Rect> rois;
+	std::vector<cv::Rect2d> detections;
+	std::vector<cv::Ptr<cv::legacy::tracking::Tracker>> algorithms;
+
+	// Get the first frame
+	video >> frame;
+	
+	// Let the user select the objects he wishes to track
+	cv::selectROIs("Select objects to track", frame, rois);
+	if (!rois.size())
+	{
+		std::cout << "Error: no selection has been made!" << std::endl;
+		return -1;
+	}
+
+	// Close the window, it is not needed anymore
+	cv::destroyWindow("Select objects to track");
+
+	// now the program will not break with any error exceptions, so set the loglevel
+#ifdef OPENCVDEMO_DEBUG
+	cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_DEBUG);
+#else
+	cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_ERROR);
+#endif // OPENCVDEMO_DEBUG
+
+	// copy all selected results and add the requested tracker type
+	for (uint64_t i = 0; i < rois.size(); ++i)
+	{
+		algorithms.push_back(utils::CreateTrackerByName(trackerName));
+		detections.push_back(rois[i]);
+	}
+
+	// Add the detections and the algorithms to the multitracker
+	multiTracker->add(algorithms, frame, detections);
+
+	std::cout << "Starting the tracking process, press esc to quit!" << std::endl;
+	for (;;)
+	{
+		// Get the next frame
+		video >> frame;
+
+		// If the video was finished, close the window and shut down the program!
+		if (frame.rows == 0 || frame.cols == 0)
+			break;
+
+		// Update the multitracker, the result determines whether a human has been tracked
+		bool found = multiTracker->update(frame);
+		if (found)
 		{
-			detections.clear();
-			hog.detectMultiScale(frame, detections, 0, cv::Size(8, 8), cv::Size(32, 32), 1.2, 2);
-			multiTracker->clear();
+			std::cout << "Found an instance of the object!" << std::endl;
 
-			for (auto &detection : detections)
+			// draw rectangles around tracked objects
+			for (const auto &object : multiTracker->getObjects())
 			{
-				ResizeBoxes(detection);
-				
-				cv::Ptr<cv::legacy::TrackerKCF> tracker = cv::legacy::TrackerKCF::create();
-				tracker->init(frame, detection);
-				multiTracker->add(tracker, frame, detection);
+				cv::rectangle(frame, object, cv::Scalar(255, 0, 0), 2, 8);
 			}
 		}
 		else
 		{
-			bool found = multiTracker->update(frame);
-		}
-
-		// draw rectangles around objects
-		for (const auto &object : multiTracker->getObjects())
-		{
-			cv::rectangle(frame, object, cv::Scalar(255, 0, 0), 2, 8);
+			std::cout << "Found no instance of the object!" << std::endl;
 		}
 
 		// Display the frame
 		cv::imshow("Video feed", frame);
 
-		output.write(frame);
-
-		// Break if ESC was hit
+		// Break if ESC was pressed
 		if (cv::waitKey(1) == 27)
 			break;
 	}
 
-	output.release();
+	// free the video resources
 	video.release();
 
+	// close all remaining windows
 	cv::destroyAllWindows();
 	
 	return 0;

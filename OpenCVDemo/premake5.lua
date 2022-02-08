@@ -65,6 +65,7 @@ project "OpenCVDemo"
 	
 	filter "configurations:Debug"
 		symbols "On"
+		defines "OPENCVDEMO_DEBUG"
 	
 		links
 		{
@@ -80,6 +81,7 @@ project "OpenCVDemo"
 	
 	filter "configurations:Release"
 		optimize "On"
+		defines "OPENCVDEMO_RELEASE"
 	
 		links
 		{
